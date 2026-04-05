@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  # GitHub has started calling new repo's first branch "main" https://github.com/github/renaming
+  # Existing codes likely still have "master" as the primary branch
+  # Both are tracked here to keep legacy and new codes working
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+      - "devel"
+  schedule:
+    # Nightly tests run on master by default:
+    #   Scheduled workflows run on the latest commit on the default or base branch.
+    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+    - cron: "0 0 * * 0"
+    
+jobs:
+  test:
+    name: "Test on ${{ matrix.os }}, Python ${{ matrix.python-version }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ macOS-latest ]
+        python-version: [ "3.10", "3.11", "3.12" ]
+
+    steps:
+    
+      - uses: actions/checkout@v2
+    
+      - name: Additional info about the build
+        shell: bash
+        run: |
+          uname -a
+          df -h
+          ulimit -a
+    
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install uv
+        run: pipx install uv
+
+      - name: Install dependencies
+        run: |        
+          uv sync
+          source .venv/bin/activate
+          uv pip install -e .
+ 
+      - name: Run pytests
+        run: |
+          source .venv/bin/activate
+          pytest -v --color=yes tests/
+
+      - name: Test notebooks
+        run: |
+          source .venv/bin/activate
+          pytest -v --color=yes --nbmake examples/envs/

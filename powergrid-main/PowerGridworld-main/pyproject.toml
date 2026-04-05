@@ -1,0 +1,18 @@
+[project]
+name = "powergridworld"
+version = "0.1.0"
+description = ""
+authors = [{ name = "None" }]
+readme = "README.md"
+dependencies = [
+    "gymnasium",
+    "jupyter",
+    "matplotlib",
+    "nbmake",
+    "notebook",
+    "opendssdirect-py",
+    "pandas",
+    "pytest",
+    "scipy"
+]
+requires-python = ">=3.10"

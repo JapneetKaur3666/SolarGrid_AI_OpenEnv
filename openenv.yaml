@@ -1,0 +1,29 @@
+# OpenEnv Configuration for SolarGrid-OpenEnv
+name: "solargrid-dispatch-v1"
+version: "0.1.0"
+description: "A real-world task for autonomous solar grid dispatching and energy management."
+tags: ["infrastructure", "energy", "scheduling", "multi-agent"]
+
+# Spec compliance
+entry_point: "src.envs.openenv_wrapper:SolarGridEnv"
+requirements: "requirements.txt"
+
+# Tasks for Scoring
+tasks:
+  - id: "maximize-self-consumption"
+    name: "Efficient Solar Usage (Easy)"
+    description: "Route at least 80% of generated solar to local loads or battery."
+    difficulty: "easy"
+  - id: "peak-shaving"
+    name: "Grid Peak Shaving (Medium)"
+    description: "Keep grid draw below 2kW during peak pricing hours (5 PM - 9 PM)."
+    difficulty: "medium"
+  - id: "emergency-load-shedding"
+    name: "Grid Stability / Blackout Prevention (Hard)"
+    description: "Maintain grid voltage within +/- 5% during a simulated local generation drop."
+    difficulty: "hard"
+
+metadata:
+  framework: "PowerGridworld + PettingZoo"
+  license: "MIT"
+  author: "Hackathon Team"
