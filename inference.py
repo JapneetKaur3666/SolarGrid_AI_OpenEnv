@@ -57,22 +57,24 @@ def evaluate_task(task_id: str, num_steps: int = 10):
     obs = env.reset()
     
     total_reward = 0
-    print(f"\n--- Evaluating Task: {task_id} ---")
+    print(f"[START] task={task_id}", flush=True)
     
-    for _ in range(num_steps):
+    for i in range(num_steps):
         action = get_agent_action(obs, task_id)
         obs, reward, terminated, truncated, info = env.step(action)
         total_reward += reward.total_reward
+        current_step = i + 1
         
         # Display the 0.0-1.0 task score from the grader
         score = info.get("task_score", 0.0)
-        print(f"Step: {env.current_step} | Action: {action.charge_discharge_rate} | Reward: {reward.total_reward:.2f} | Task Score: {score:.2%}")
+        print(f"[STEP] step={current_step} reward={reward.total_reward:.4f}", flush=True)
         
         if terminated or truncated:
             break
             
-    print(f"Final Score for {task_id}: {total_reward:.2f}")
-    return total_reward
+    final_score = info.get("task_score", 0.0)
+    print(f"[END] task={task_id} score={final_score:.4f} steps={env.current_step}", flush=True)
+    return final_score
 
 if __name__ == "__main__":
     tasks = ["maximize-self-consumption", "peak-shaving", "emergency-load-shedding"]
@@ -81,6 +83,6 @@ if __name__ == "__main__":
     for task in tasks:
         results[task] = evaluate_task(task)
         
-    print("\n--- Final Hackathon Baseline Summary ---")
+    print("\n--- Final Hackathon Baseline Summary ---", flush=True)
     for task, score in results.items():
-        print(f"* Task: {task} | Score: {score:.2f}")
+        print(f"* Task: {task} | Score: {score:.4f}", flush=True)

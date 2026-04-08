@@ -214,43 +214,6 @@ class SolarGridEnv(gym.Env):
             
         elif self.task_id == "peak-shaving":
             # Target 2.0 kW max draw during peak
-            penalty_shaping = max(0, (self.peak_grid_draw - 2.0) / 2.0)
-            step_score = 1.0 - penalty_shaping
-            
-        elif self.task_id == "emergency-load-shedding":
-            # Ratio of time voltage was stable
-            step_score = self.time_in_safe_voltage / self.current_step
-            
-        # Update running cumulative score (Shaping Credit)
-        self.cumulative_task_score = (self.cumulative_task_score * (self.current_step - 1) + step_score) / self.current_step
-        return float(np.clip(self.cumulative_task_score, 0.0, 1.0))
-
-    def _update_grader_metrics(self, obs: SolarObservation):
-        # Tracking for scoring
-        self.total_solar_gen += obs.solar_generation_kw
-        net_grid = obs.household_demand_kw - obs.solar_generation_kw
-        if net_grid < 0: # Exporting
-            self.total_grid_export += abs(net_grid)
-        
-        # Track peak draw during peak hours for Task 2
-        if 17 <= obs.time_of_day <= 21:
-            self.peak_grid_draw = max(self.peak_grid_draw, max(0, net_grid))
-            
-        # Track voltage stability for Task 3
-        if 0.95 <= obs.grid_voltage <= 1.05:
-            self.time_in_safe_voltage += 1
-
-    def _calculate_task_score(self) -> float:
-        """Calculates 0.0 - 1.0 score based on task specific criteria with shaping."""
-        step_score = 0.0
-        
-        if self.task_id == "maximize-self-consumption":
-            if self.total_solar_gen == 0: step_score = 1.0
-            else:
-                step_score = (self.total_solar_gen - self.total_grid_export) / self.total_solar_gen
-            
-        elif self.task_id == "peak-shaving":
-            # Target 2.0 kW max draw during peak
             # SHAPING: Gradually reduce the score based on how close we are to violating the peak
             penalty_shaping = max(0, (self.peak_grid_draw - 2.0) / 2.0)
             step_score = 1.0 - penalty_shaping
