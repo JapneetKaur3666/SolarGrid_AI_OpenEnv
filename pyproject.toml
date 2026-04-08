@@ -7,7 +7,7 @@ name = "solargrid-openenv"
 version = "0.1.0"
 description = "A highly realistic multi-agent reinforcement learning environment mapping OpenDSS power flows to the OpenEnv specification."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Hackathon Team"},
@@ -20,8 +20,12 @@ dependencies = [
     "pandas>=1.5.0",
     "numpy>=1.24.0",
     "scipy>=1.10.0",
-    "pydantic>=2.0.0"
+    "pydantic>=2.0.0",
+    "openenv-core>=0.2.0"
 ]
+
+[project.scripts]
+server = "server.app:app"
 
 [project.optional-dependencies]
 dev = [

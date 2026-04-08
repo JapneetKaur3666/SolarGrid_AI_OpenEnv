@@ -30,7 +30,8 @@ COPY src/ /app/src/
 COPY templates/ /app/templates/
 COPY openenv.yaml /app/openenv.yaml
 COPY pyproject.toml /app/pyproject.toml
-COPY app.py /app/app.py
+COPY uv.lock /app/uv.lock
+COPY server/ /app/server/
 COPY inference.py /app/inference.py
 COPY train_mappo.py /app/train_mappo.py
 COPY solar_grid_schematic.png /app/solar_grid_schematic.png
@@ -44,4 +45,4 @@ ENV PYTHONPATH="/app:${PYTHONPATH}"
 EXPOSE 7860
 
 # Default command: Start the real-time interactive dashboard + OpenEnv API
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
