@@ -30,7 +30,7 @@ COPY src/ /app/src/
 COPY templates/ /app/templates/
 COPY openenv.yaml /app/openenv.yaml
 COPY app.py /app/app.py
-COPY dashboard_server.py /app/dashboard_server.py
+COPY inference.py /app/inference.py
 COPY train_mappo.py /app/train_mappo.py
 COPY solar_grid_schematic.png /app/solar_grid_schematic.png
 COPY README.md /app/README.md
@@ -42,5 +42,5 @@ ENV PYTHONPATH="/app:${PYTHONPATH}"
 # Expose the correct port for Hugging Face Spaces
 EXPOSE 7860
 
-# Default command: Start the real-time interactive dashboard
-CMD ["python", "dashboard_server.py"]
+# Default command: Start the real-time interactive dashboard + OpenEnv API
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]

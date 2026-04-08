@@ -1,81 +1,101 @@
 import os
+import asyncio
 import json
-import openai
-from typing import Dict, Any
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from src.envs.openenv_wrapper import SolarGridEnv
-from src.envs.models import SolarObservation, SolarAction
-import streamlit as st
+from src.envs.models import SolarAction
 
-st.title("⚡ SolarGrid AI")
-st.write("Smart Solar Grid Optimization System")
+app = FastAPI()
 
-st.success("App is running 🚀")
+# Solar Grid Environment Instance
+env = SolarGridEnv(task_id="peak-shaving")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Configure OpenAI client
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+@app.get("/")
+async def get():
+    with open(os.path.join(BASE_DIR, "templates", "index.html"), "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
 
-def get_agent_action(obs: SolarObservation, task_name: str) -> SolarAction:
-    """Uses LLM to decide on the best dispatcher action."""
-    system_prompt = f"""
-    You are an AI Grid Dispatcher for a Smart Solar Grid. 
-    Task: {task_name}
-    Current Observation: {obs.model_dump_json()}
-    
-    You must output a JSON object conforming to the following SolarAction format:
-    {{
-        "charge_discharge_rate": float (-1.0 to 1.0),
-        "shed_non_critical_load": bool,
-        "grid_export_limit": float
-    }}
-    - Charge battery (>0) if solar surplus is high and price is low.
-    - Discharge (<0) if demand is peak and price is high.
-    - Shed load if voltage is too high or grid is stressed.
-    """
-    
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "system", "content": system_prompt}],
-            response_format={"type": "json_object"}
-        )
-        content = response.choices[0].message.content
-        data = json.loads(content)
-        return SolarAction(**data)
-    except Exception as e:
-        print(f"Error calling OpenAI API: {e}")
-        # Default fallback action
-        return SolarAction(charge_discharge_rate=0.0, shed_non_critical_load=False, grid_export_limit=1.0)
+@app.get("/circuit")
+async def get_circuit():
+    with open(os.path.join(BASE_DIR, "templates", "circuit.html"), "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
 
-def evaluate_task(task_id: str, num_steps: int = 10):
-    """Evaluates the agent on a specific task scenario."""
-    env = SolarGridEnv(task_id=task_id)
+@app.get("/solar_grid_schematic")
+async def get_schematic():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    img_path = os.path.join(script_dir, "solar_grid_schematic.png")
+    return FileResponse(img_path, media_type="image/png")
+
+# --- OPENENV HACKATHON GRADER API ENDPOINTS ---
+@app.post("/reset")
+def reset_env():
+    obs = env.reset()
+    return obs.model_dump()
+
+@app.post("/step")
+def step_env(action: dict):
+    # Parse incoming JSON dict to Pydantic SolarAction
+    act = SolarAction(**action)
+    obs, reward, terminated, truncated, info = env.step(act)
+    return {
+        "observation": obs.model_dump(),
+        "reward": reward.total_reward,
+        "done": terminated or truncated,
+        "info": info
+    }
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
     obs = env.reset()
     
-    total_reward = 0
-    print(f"\n--- Evaluating Task: {task_id} ---")
-    
-    for _ in range(num_steps):
-        action = get_agent_action(obs, task_id)
-        obs, reward, terminated, truncated, info = env.step(action)
-        total_reward += reward.total_reward
-        
-        # Display the 0.0-1.0 task score from the grader
-        score = info.get("task_score", 0.0)
-        print(f"Step: {env.current_step} | Action: {action.charge_discharge_rate} | Reward: {reward.total_reward:.2f} | Task Score: {score:.2%}")
-        
-        if terminated or truncated:
-            break
+    try:
+        while True:
+            # 1. Simulate an Agent decision (Simplified for front-end demo)
+            # In a real run, this would call your baseline_inference.py logic
+            if obs.solar_generation_kw > obs.household_demand_kw:
+                action = SolarAction(charge_discharge_rate=0.8, shed_non_critical_load=False, grid_export_limit=1.0)
+            else:
+                action = SolarAction(charge_discharge_rate=-0.5, shed_non_critical_load=False, grid_export_limit=1.0)
             
-    print(f"Final Score for {task_id}: {total_reward:.2f}")
-    return total_reward
+            # 2. Step the Environment
+            obs, reward, terminated, truncated, info = env.step(action)
+            
+            # 3. Prepare the telemetry packet for the UI
+            telemetry = {
+                "step": env.current_step,
+                "time": f"{int(obs.time_of_day):02d}:{int((obs.time_of_day % 1) * 60):02d}",
+                "solar": round(obs.solar_generation_kw, 2),
+                "demand": round(obs.household_demand_kw, 2),
+                "battery_soc": round(obs.battery_soc * 100, 1),
+                "voltage": round(obs.grid_voltage, 3),
+                "price": round(obs.energy_price, 2),
+                "score": round(info.get("task_score", 0) * 100, 1),
+                "rewards": {
+                    "cost": round(reward.cost_saving, 3),
+                    "solar": round(reward.solar_utilization, 3),
+                    "wear": round(reward.battery_wear, 3),
+                    "stability": round(reward.stability_penalty, 3)
+                },
+                "action": "Charging" if action.charge_discharge_rate > 0 else "Discharging"
+            }
+            
+            # 4. Push to Client
+            await websocket.send_text(json.dumps(telemetry))
+            
+            # 5. Handle Reset
+            if terminated or truncated:
+                obs = env.reset()
+                
+            await asyncio.sleep(0.5) # Sim speed controller
+            
+    except WebSocketDisconnect:
+        print("Client disconnected.")
 
 if __name__ == "__main__":
-    tasks = ["maximize-self-consumption", "peak-shaving", "emergency-load-shedding"]
-    results = {}
-    
-    for task in tasks:
-        results[task] = evaluate_task(task)
-        
-    print("\n--- Final Hackathon Baseline Summary ---")
-    for task, score in results.items():
-        print(f"* Task: {task} | Score: {score:.2f}")
+    import uvicorn
+    # Make sure we are in the right directory to find templates
+    uvicorn.run(app, host="0.0.0.0", port=7860)

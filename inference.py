@@ -1,0 +1,81 @@
+import os
+import json
+import openai
+from typing import Dict, Any
+from src.envs.openenv_wrapper import SolarGridEnv
+from src.envs.models import SolarObservation, SolarAction
+import streamlit as st
+
+st.title("⚡ SolarGrid AI")
+st.write("Smart Solar Grid Optimization System")
+
+st.success("App is running 🚀")
+
+# Configure OpenAI client
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def get_agent_action(obs: SolarObservation, task_name: str) -> SolarAction:
+    """Uses LLM to decide on the best dispatcher action."""
+    system_prompt = f"""
+    You are an AI Grid Dispatcher for a Smart Solar Grid. 
+    Task: {task_name}
+    Current Observation: {obs.model_dump_json()}
+    
+    You must output a JSON object conforming to the following SolarAction format:
+    {{
+        "charge_discharge_rate": float (-1.0 to 1.0),
+        "shed_non_critical_load": bool,
+        "grid_export_limit": float
+    }}
+    - Charge battery (>0) if solar surplus is high and price is low.
+    - Discharge (<0) if demand is peak and price is high.
+    - Shed load if voltage is too high or grid is stressed.
+    """
+    
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "system", "content": system_prompt}],
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        return SolarAction(**data)
+    except Exception as e:
+        print(f"Error calling OpenAI API: {e}")
+        # Default fallback action
+        return SolarAction(charge_discharge_rate=0.0, shed_non_critical_load=False, grid_export_limit=1.0)
+
+def evaluate_task(task_id: str, num_steps: int = 10):
+    """Evaluates the agent on a specific task scenario."""
+    env = SolarGridEnv(task_id=task_id)
+    obs = env.reset()
+    
+    total_reward = 0
+    print(f"\n--- Evaluating Task: {task_id} ---")
+    
+    for _ in range(num_steps):
+        action = get_agent_action(obs, task_id)
+        obs, reward, terminated, truncated, info = env.step(action)
+        total_reward += reward.total_reward
+        
+        # Display the 0.0-1.0 task score from the grader
+        score = info.get("task_score", 0.0)
+        print(f"Step: {env.current_step} | Action: {action.charge_discharge_rate} | Reward: {reward.total_reward:.2f} | Task Score: {score:.2%}")
+        
+        if terminated or truncated:
+            break
+            
+    print(f"Final Score for {task_id}: {total_reward:.2f}")
+    return total_reward
+
+if __name__ == "__main__":
+    tasks = ["maximize-self-consumption", "peak-shaving", "emergency-load-shedding"]
+    results = {}
+    
+    for task in tasks:
+        results[task] = evaluate_task(task)
+        
+    print("\n--- Final Hackathon Baseline Summary ---")
+    for task, score in results.items():
+        print(f"* Task: {task} | Score: {score:.2f}")
