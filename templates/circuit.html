@@ -598,8 +598,7 @@ function setWire(id, active) {
   if (w) w.active = active;
 }
 
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const ws = new WebSocket(`${wsProtocol}//${location.host}/ws`);
+const ws = new WebSocket(`ws://${location.host}/ws`);
 ws.onopen  = () => document.getElementById('status').innerText = 'RL MODEL ACTIVE';
 ws.onclose = () => document.getElementById('status').innerText = 'DISCONNECTED';
 

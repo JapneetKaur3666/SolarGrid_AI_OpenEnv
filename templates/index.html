@@ -156,8 +156,7 @@
 
         const rewardChart = new Chart(document.getElementById('rewardChart').getContext('2d'), { type: 'bar', data: { labels: ['Cost', 'Solar', 'Wear', 'Stabil'], datasets: [ { backgroundColor: ['#10b981', '#facc15', '#fb7185', '#6366f1'], data: [0, 0, 0, 0] } ] }, options: chartOptions });
 
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${wsProtocol}//${location.host}/ws`);
+        const ws = new WebSocket(`ws://${location.host}/ws`);
         const timeline = document.getElementById('timeline');
 
         ws.onmessage = (event) => {

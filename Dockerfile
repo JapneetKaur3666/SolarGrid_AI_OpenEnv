@@ -29,7 +29,7 @@ RUN cd /app/PowerGridWorld && pip install -e .
 COPY src/ /app/src/
 COPY templates/ /app/templates/
 COPY openenv.yaml /app/openenv.yaml
-COPY baseline_inference.py /app/baseline_inference.py
+COPY app.py /app/app.py
 COPY dashboard_server.py /app/dashboard_server.py
 COPY train_mappo.py /app/train_mappo.py
 COPY solar_grid_schematic.png /app/solar_grid_schematic.png

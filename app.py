@@ -4,6 +4,12 @@ import openai
 from typing import Dict, Any
 from src.envs.openenv_wrapper import SolarGridEnv
 from src.envs.models import SolarObservation, SolarAction
+import streamlit as st
+
+st.title("⚡ SolarGrid AI")
+st.write("Smart Solar Grid Optimization System")
+
+st.success("App is running 🚀")
 
 # Configure OpenAI client
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
