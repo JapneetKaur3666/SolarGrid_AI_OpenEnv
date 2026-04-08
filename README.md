@@ -1,3 +1,13 @@
+---
+title: Solar-OpenEnv
+emoji: ⚡
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # ⚡ SolarGrid AI: OpenEnv Autonomous Dispatcher
 [![OpenEnv Compliant](https://img.shields.io/badge/OpenEnv-Compliant-success)](#) [![Docker](https://img.shields.io/badge/Docker-Ready-indigo)](#) [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Deployed-yellow)](#)
 
