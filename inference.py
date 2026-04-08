@@ -11,8 +11,13 @@ st.write("Smart Solar Grid Optimization System")
 
 st.success("App is running 🚀")
 
-# Configure OpenAI client
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def get_openai_client():
+    key = os.getenv("OPENAI_API_KEY")
+    if not key:
+        return None
+    return openai.OpenAI(api_key=key)
+
+client = get_openai_client()
 
 def get_agent_action(obs: SolarObservation, task_name: str) -> SolarAction:
     """Uses LLM to decide on the best dispatcher action."""
