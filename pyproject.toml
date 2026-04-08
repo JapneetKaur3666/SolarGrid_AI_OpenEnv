@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "solargrid-openenv"
+version = "0.1.0"
+description = "A highly realistic multi-agent reinforcement learning environment mapping OpenDSS power flows to the OpenEnv specification."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Hackathon Team"},
+]
+
+keywords = ["reinforcement-learning", "smart-grid", "openenv", "powergridworld", "multi-agent"]
+dependencies = [
+    "gymnasium>=0.28.1",
+    "opendssdirect-py>=0.9.4",
+    "pandas>=1.5.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "pydantic>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "jupyter>=1.0.0"
+]

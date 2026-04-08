@@ -29,6 +29,7 @@ RUN cd /app/PowerGridWorld && pip install -e .
 COPY src/ /app/src/
 COPY templates/ /app/templates/
 COPY openenv.yaml /app/openenv.yaml
+COPY pyproject.toml /app/pyproject.toml
 COPY app.py /app/app.py
 COPY inference.py /app/inference.py
 COPY train_mappo.py /app/train_mappo.py
