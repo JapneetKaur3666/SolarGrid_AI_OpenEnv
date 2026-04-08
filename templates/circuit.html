@@ -1,642 +1,806 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Smart Solar Grid — Live RL Circuit</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#030d0a; color:#e0ffe8; font-family:'Inter',sans-serif; overflow-x:hidden; }
+  <meta charset="UTF-8">
+  <title>Smart Solar Grid — Live RL Circuit</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Share+Tech+Mono&family=Inter:wght@400;600&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  /* ── Header ─────────────────────────────────────────── */
-  header {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:14px 32px;
-    background:rgba(0,0,0,0.6);
-    border-bottom:1px solid rgba(0,255,136,0.12);
-  }
-  header h1 {
-    font-family:'Orbitron',sans-serif; font-size:17px; letter-spacing:4px;
-    background:linear-gradient(90deg,#00ff88,#00d4ff);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    background-clip:text;
-  }
-  .pill {
-    display:flex; align-items:center; gap:8px;
-    background:rgba(0,255,136,0.07); border:1px solid rgba(0,255,136,0.2);
-    padding:6px 16px; border-radius:20px; font-family:'Share Tech Mono'; font-size:11px;
-  }
-  .dot { width:7px; height:7px; border-radius:50%; background:#00ff88; animation:blink 1.4s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-  .nav-back {
-    font-family:'Orbitron'; font-size:9px; letter-spacing:2px; color:#00ff88;
-    border:1px solid rgba(0,255,136,0.25); background:rgba(0,255,136,0.06);
-    padding:7px 16px; border-radius:8px; cursor:pointer; text-decoration:none;
-  }
+    body {
+      background: #030d0a;
+      color: #e0ffe8;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
 
-  /* ── Canvas ─────────────────────────────────────────── */
-  #canvas { display:block; width:100%; }
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 32px;
+      background: rgba(0, 0, 0, 0.6);
+      border-bottom: 1px solid rgba(0, 255, 136, 0.12);
+    }
 
-  /* ── Live Metrics Bar ───────────────────────────────── */
-  #metrics {
-    display:grid; grid-template-columns:repeat(6,1fr);
-    border-top:1px solid rgba(0,255,136,0.1);
-    border-bottom:1px solid rgba(0,255,136,0.1);
-  }
-  .metric { padding:10px 0; text-align:center; border-right:1px solid rgba(0,255,136,0.07); }
-  .metric:last-child { border-right:none; }
-  .metric .lbl { font-size:8px; letter-spacing:2px; color:#3a6b4a; text-transform:uppercase; }
-  .metric .val { font-family:'Orbitron'; font-size:16px; font-weight:700; margin-top:3px; }
+    header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 17px;
+      letter-spacing: 4px;
+      background: linear-gradient(90deg, #00ff88, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-  /* ── Explanation Panel ──────────────────────────────── */
-  #explainer {
-    max-width:1400px; margin:0 auto;
-    display:grid; grid-template-columns:1fr 1fr 1fr;
-    gap:20px; padding:32px;
-  }
-  .exp-card {
-    background:rgba(0,255,136,0.04);
-    border:1px solid rgba(0,255,136,0.12);
-    border-radius:16px; padding:24px;
-  }
-  .exp-card h3 {
-    font-family:'Orbitron'; font-size:10px; letter-spacing:3px;
-    color:#00ff88; margin-bottom:16px; padding-bottom:10px;
-    border-bottom:1px solid rgba(0,255,136,0.12);
-  }
-  .exp-card p, .exp-card li {
-    font-size:12px; line-height:1.8; color:#7aad88;
-  }
-  .exp-card ul { list-style:none; }
-  .exp-card li { margin-bottom:8px; }
-  .exp-card li::before { content:'▸ '; color:#00ff88; }
-  .tag {
-    display:inline-block; font-size:9px; font-family:'Share Tech Mono';
-    padding:2px 8px; border-radius:4px; margin-right:4px; margin-top:2px;
-    border:1px solid;
-  }
-  .tag-dc  { color:#38bdf8; border-color:#38bdf8; background:rgba(56,189,248,0.07); }
-  .tag-ac  { color:#00ff88; border-color:#00ff88; background:rgba(0,255,136,0.07); }
-  .tag-fb  { color:#a78bfa; border-color:#a78bfa; background:rgba(167,139,250,0.07); }
-  .tag-rl  { color:#fbbf24; border-color:#fbbf24; background:rgba(251,191,36,0.07); }
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 255, 136, 0.07);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-family: 'Share Tech Mono';
+      font-size: 11px;
+    }
 
-  footer {
-    text-align:center; padding:16px; font-size:10px;
-    color:#2a4a32; letter-spacing:2px; font-family:'Share Tech Mono';
-    border-top:1px solid rgba(0,255,136,0.07);
-  }
-</style>
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #00ff88;
+      animation: blink 1.4s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .2
+      }
+    }
+
+    .nav-back {
+      font-family: 'Orbitron';
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: #00ff88;
+      border: 1px solid rgba(0, 255, 136, 0.25);
+      background: rgba(0, 255, 136, 0.06);
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* ── Canvas ─────────────────────────────────────────── */
+    #canvas {
+      display: block;
+      width: 100%;
+    }
+
+    /* ── Live Metrics Bar ───────────────────────────────── */
+    #metrics {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border-top: 1px solid rgba(0, 255, 136, 0.1);
+      border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+    }
+
+    .metric {
+      padding: 10px 0;
+      text-align: center;
+      border-right: 1px solid rgba(0, 255, 136, 0.07);
+    }
+
+    .metric:last-child {
+      border-right: none;
+    }
+
+    .metric .lbl {
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: #3a6b4a;
+      text-transform: uppercase;
+    }
+
+    .metric .val {
+      font-family: 'Orbitron';
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    /* ── Explanation Panel ──────────────────────────────── */
+    #explainer {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      padding: 32px;
+    }
+
+    .exp-card {
+      background: rgba(0, 255, 136, 0.04);
+      border: 1px solid rgba(0, 255, 136, 0.12);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .exp-card h3 {
+      font-family: 'Orbitron';
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: #00ff88;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(0, 255, 136, 0.12);
+    }
+
+    .exp-card p,
+    .exp-card li {
+      font-size: 12px;
+      line-height: 1.8;
+      color: #7aad88;
+    }
+
+    .exp-card ul {
+      list-style: none;
+    }
+
+    .exp-card li {
+      margin-bottom: 8px;
+    }
+
+    .exp-card li::before {
+      content: '▸ ';
+      color: #00ff88;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 9px;
+      font-family: 'Share Tech Mono';
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 4px;
+      margin-top: 2px;
+      border: 1px solid;
+    }
+
+    .tag-dc {
+      color: #38bdf8;
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.07);
+    }
+
+    .tag-ac {
+      color: #00ff88;
+      border-color: #00ff88;
+      background: rgba(0, 255, 136, 0.07);
+    }
+
+    .tag-fb {
+      color: #a78bfa;
+      border-color: #a78bfa;
+      background: rgba(167, 139, 250, 0.07);
+    }
+
+    .tag-rl {
+      color: #fbbf24;
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.07);
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 10px;
+      color: #2a4a32;
+      letter-spacing: 2px;
+      font-family: 'Share Tech Mono';
+      border-top: 1px solid rgba(0, 255, 136, 0.07);
+    }
+  </style>
 </head>
+
 <body>
 
-<header>
-  <h1>⚡ SMART SOLAR GRID — LIVE RL CIRCUIT</h1>
-  <div class="pill"><div class="dot"></div><span id="status">CONNECTING...</span></div>
-  <a class="nav-back" href="/">← DASHBOARD</a>
-</header>
+  <header>
+    <h1>⚡ SMART SOLAR GRID — LIVE RL CIRCUIT</h1>
+    <div class="pill">
+      <div class="dot"></div><span id="status">CONNECTING...</span>
+    </div>
+    <a class="nav-back" href="/">← DASHBOARD</a>
+  </header>
 
-<canvas id="canvas"></canvas>
+  <canvas id="canvas"></canvas>
 
-<!-- Live Metrics Bar -->
-<div id="metrics">
-  <div class="metric"><div class="lbl">Solar Gen</div><div class="val" id="m_solar" style="color:#facc15">0.0 kW</div></div>
-  <div class="metric"><div class="lbl">BESS SOC</div><div class="val" id="m_soc" style="color:#38bdf8">0%</div></div>
-  <div class="metric"><div class="lbl">Home Demand</div><div class="val" id="m_demand" style="color:#fb7185">0.0 kW</div></div>
-  <div class="metric"><div class="lbl">Voltage (pu)</div><div class="val" id="m_volt" style="color:#a78bfa">1.000</div></div>
-  <div class="metric"><div class="lbl">Grid Price</div><div class="val" id="m_price" style="color:#00ff88">$0.15</div></div>
-  <div class="metric"><div class="lbl">RL Score</div><div class="val" id="m_score" style="color:#fbbf24">0%</div></div>
-</div>
-
-<!-- Explanation Panel -->
-<div id="explainer">
-
-  <div class="exp-card">
-    <h3>WHAT THE ANIMATION SHOWS</h3>
-    <ul>
-      <li>Each <b style="color:#facc15">moving dot</b> is a packet of electrical energy (electron).</li>
-      <li><span class="tag tag-dc">DC BLUE</span> wires carry raw solar DC power from panels → inverter, and to/from the battery.</li>
-      <li><span class="tag tag-ac">AC GREEN</span> wires carry converted household AC electricity to your loads.</li>
-      <li><span class="tag tag-fb">PURPLE</span> dashed lines are Grid Feedback / Smart Meter signals.</li>
-      <li>Electrons appear <b style="color:#fff">only on active wires</b> — if dots are flowing, power is moving.</li>
-      <li>When the RL agent picks <b>CHARGE</b>, electrons flow PV→BESS. When <b>DISCHARGE</b>, they flow BESS→Load.</li>
-    </ul>
+  <!-- Live Metrics Bar -->
+  <div id="metrics">
+    <div class="metric">
+      <div class="lbl">Solar Gen</div>
+      <div class="val" id="m_solar" style="color:#facc15">0.0 kW</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">BESS SOC</div>
+      <div class="val" id="m_soc" style="color:#38bdf8">0%</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Home Demand</div>
+      <div class="val" id="m_demand" style="color:#fb7185">0.0 kW</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Voltage (pu)</div>
+      <div class="val" id="m_volt" style="color:#a78bfa">1.000</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Grid Price</div>
+      <div class="val" id="m_price" style="color:#00ff88">$0.15</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">RL Score</div>
+      <div class="val" id="m_score" style="color:#fbbf24">0%</div>
+    </div>
   </div>
 
-  <div class="exp-card">
-    <h3>WHAT'S RUNNING IN THE BACKEND</h3>
-    <ul>
-      <li><span class="tag tag-rl">PowerGridworld</span> — NREL physics engine simulating the IEEE 13 node feeder every 15 min.</li>
-      <li><span class="tag tag-rl">EnergyStorageEnv</span> — Models a 100 kWh BESS with charge/discharge efficiency.</li>
-      <li><span class="tag tag-rl">SolarGridEnv</span> — OpenEnv-compliant wrapper exposing Pydantic Observations & Actions.</li>
-      <li><span class="tag tag-rl">RL Policy</span> — A rule-based baseline agent: charge when Solar > Demand, else discharge.</li>
-      <li>Every 0.5 sec the backend pushes telemetry via <b>WebSocket</b> to this page.</li>
-    </ul>
+  <!-- Explanation Panel -->
+  <div id="explainer">
+
+    <div class="exp-card">
+      <h3>WHAT THE ANIMATION SHOWS</h3>
+      <ul>
+        <li>Each <b style="color:#facc15">moving dot</b> is a packet of electrical energy (electron).</li>
+        <li><span class="tag tag-dc">DC BLUE</span> wires carry raw solar DC power from panels → inverter, and to/from
+          the battery.</li>
+        <li><span class="tag tag-ac">AC GREEN</span> wires carry converted household AC electricity to your loads.</li>
+        <li><span class="tag tag-fb">PURPLE</span> dashed lines are Grid Feedback / Smart Meter signals.</li>
+        <li>Electrons appear <b style="color:#fff">only on active wires</b> — if dots are flowing, power is moving.</li>
+        <li>When the RL agent picks <b>CHARGE</b>, electrons flow PV→BESS. When <b>DISCHARGE</b>, they flow BESS→Load.
+        </li>
+      </ul>
+    </div>
+
+    <div class="exp-card">
+      <h3>WHAT'S RUNNING IN THE BACKEND</h3>
+      <ul>
+        <li><span class="tag tag-rl">PowerGridworld</span> — NREL physics engine simulating the IEEE 13 node feeder
+          every 15 min.</li>
+        <li><span class="tag tag-rl">EnergyStorageEnv</span> — Models a 100 kWh BESS with charge/discharge efficiency.
+        </li>
+        <li><span class="tag tag-rl">SolarGridEnv</span> — OpenEnv-compliant wrapper exposing Pydantic Observations &
+          Actions.</li>
+        <li><span class="tag tag-rl">RL Policy</span> — A rule-based baseline agent: charge when Solar > Demand, else
+          discharge.</li>
+        <li>Every 0.5 sec the backend pushes telemetry via <b>WebSocket</b> to this page.</li>
+      </ul>
+    </div>
+
+    <div class="exp-card">
+      <h3>WHAT EACH COMPONENT MEANS</h3>
+      <ul>
+        <li><b style="color:#facc15">PV Array</b> — Solar panels generating DC electricity based on a sin-curve solar
+          profile.</li>
+        <li><b style="color:#22d3ee">Combiner Box</b> — Aggregates multiple panel strings into a single DC bus.</li>
+        <li><b style="color:#00ff88">Bi-Dir Inverter</b> — Converts DC←→AC. The RL brain's command gateway.</li>
+        <li><b style="color:#38bdf8">BESS</b> — Battery stores excess solar. SOC% shown live from EnergyStorageEnv.</li>
+        <li><b style="color:#fb7185">Smart Load</b> — HVAC, EV, TV, Lights consuming AC power.</li>
+        <li><b style="color:#a78bfa">Utility Grid</b> — External grid for import (when battery low) or export (when
+          full).</li>
+        <li><b style="color:#fbbf24">Smart Meter</b> — Measures net import/export. Drives the RL reward signal.</li>
+      </ul>
+    </div>
+
   </div>
 
-  <div class="exp-card">
-    <h3>WHAT EACH COMPONENT MEANS</h3>
-    <ul>
-      <li><b style="color:#facc15">PV Array</b> — Solar panels generating DC electricity based on a sin-curve solar profile.</li>
-      <li><b style="color:#22d3ee">Combiner Box</b> — Aggregates multiple panel strings into a single DC bus.</li>
-      <li><b style="color:#00ff88">Bi-Dir Inverter</b> — Converts DC←→AC. The RL brain's command gateway.</li>
-      <li><b style="color:#38bdf8">BESS</b> — Battery stores excess solar. SOC% shown live from EnergyStorageEnv.</li>
-      <li><b style="color:#fb7185">Smart Load</b> — HVAC, EV, TV, Lights consuming AC power.</li>
-      <li><b style="color:#a78bfa">Utility Grid</b> — External grid for import (when battery low) or export (when full).</li>
-      <li><b style="color:#fbbf24">Smart Meter</b> — Measures net import/export. Drives the RL reward signal.</li>
-    </ul>
-  </div>
+  <footer>SOLARGRID AI v2.1 · OPENENV COMPLIANT · MULTI-AGENT RL · INDIA MEGA AI HACKATHON</footer>
 
-</div>
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    //  CANVAS SETUP
+    // ══════════════════════════════════════════════════════════════
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const CW = () => canvas.width;
+    const CH = () => canvas.height;
 
-<footer>SOLARGRID AI v2.1 · OPENENV COMPLIANT · MULTI-AGENT RL · INDIA MEGA AI HACKATHON</footer>
-
-<script>
-// ══════════════════════════════════════════════════════════════
-//  CANVAS SETUP
-// ══════════════════════════════════════════════════════════════
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
-const CW = () => canvas.width;
-const CH = () => canvas.height;
-
-function resize() {
-  canvas.width  = window.innerWidth;
-  canvas.height = Math.floor(window.innerWidth * 0.52);
-}
-resize();
-window.addEventListener('resize', () => { resize(); });
-
-// ══════════════════════════════════════════════════════════════
-//  COMPONENT DEFINITIONS  (positions as % of canvas)
-//  Matching the schematic: PV → Combiner → Inverter → Panel → Load / Grid
-//                                              ↕
-//                                             BESS
-// ══════════════════════════════════════════════════════════════
-function C(xp, yp) { return { x: xp * CW(), y: yp * CH() }; }
-
-const DEFS = {
-  pv       : { xp:0.08, yp:0.42, label:'PV ARRAY',      sub:'Solar Panels',          icon:'M',  color:'#facc15', w:0.06, h:0.55 },
-  combiner : { xp:0.22, yp:0.38, label:'COMBINER BOX',  sub:'DC Aggregator',         icon:'⚡', color:'#22d3ee', w:0.07, h:0.18 },
-  inverter : { xp:0.44, yp:0.30, label:'BI-DIR INVERTER',sub:'AC/DC Conversion',     icon:'~',  color:'#00ff88', w:0.09, h:0.22 },
-  bess     : { xp:0.44, yp:0.72, label:'BESS',          sub:'Battery Storage',       icon:'▣',  color:'#38bdf8', w:0.09, h:0.28 },
-  panel    : { xp:0.67, yp:0.30, label:'LOAD PANEL',    sub:'AC Distribution',       icon:'▦',  color:'#34d399', w:0.08, h:0.22 },
-  load     : { xp:0.67, yp:0.72, label:'SMART LOAD',    sub:'HVAC · EV · TV · Light',icon:'⌂',  color:'#fb7185', w:0.08, h:0.28 },
-  grid     : { xp:0.88, yp:0.22, label:'UTILITY GRID',  sub:'AC Main',               icon:'⌁',  color:'#a78bfa', w:0.07, h:0.18 },
-  meter    : { xp:0.88, yp:0.52, label:'SMART METER',   sub:'Net Measurement',       icon:'◉',  color:'#fbbf24', w:0.07, h:0.18 },
-};
-
-// ══════════════════════════════════════════════════════════════
-//  WIRE DEFINITIONS
-//  type: 'dc'=blue  'ac'=green  'fb'=purple
-// ══════════════════════════════════════════════════════════════
-const WIRES = [
-  { id:'pv_cb',   from:'pv',      to:'combiner', type:'dc', label:'DC Gen',        active:true  },
-  { id:'cb_inv',  from:'combiner',to:'inverter',  type:'dc', label:'DC Bus',        active:true  },
-  { id:'inv_pan', from:'inverter', to:'panel',    type:'ac', label:'AC Electricity',active:true  },
-  { id:'inv_bess',from:'inverter', to:'bess',     type:'dc', label:'DC Charge',     active:false },
-  { id:'bess_inv',from:'bess',     to:'inverter', type:'dc', label:'Discharge',     active:false },
-  { id:'pan_load',from:'panel',    to:'load',     type:'ac', label:'Smart Load',    active:true  },
-  { id:'pan_met', from:'panel',    to:'meter',    type:'fb', label:'Grid Feedback', active:true  },
-  { id:'met_grid',from:'meter',    to:'grid',     type:'fb', label:'Grid Sync',     active:true  },
-  { id:'grid_met',from:'grid',     to:'meter',    type:'fb', label:'Import/Export', active:false },
-];
-
-const WIRE_COLORS = { dc:'#38bdf8', ac:'#00ff88', fb:'#a78bfa' };
-
-// ══════════════════════════════════════════════════════════════
-//  ELECTRONS
-// ══════════════════════════════════════════════════════════════
-const electrons = [];
-let spawnTick   = 0;
-let animT       = 0;
-
-function spawnElectrons() {
-  WIRES.forEach(w => {
-    if (!w.active) return;
-    if (Math.random() > 0.55) return;
-    electrons.push({ wire:w, t:0, speed:0.012 + Math.random()*0.008 });
-  });
-}
-
-// ══════════════════════════════════════════════════════════════
-//  ROUTING — orthogonal path (right-angle traces like a real PCB)
-// ══════════════════════════════════════════════════════════════
-function wirePoints(from, to) {
-  const fd = DEFS[from], td = DEFS[to];
-  const A  = { x: fd.xp * CW(), y: fd.yp * CH() };
-  const B  = { x: td.xp * CW(), y: td.yp * CH() };
-  const mx = (A.x + B.x) / 2;
-  return [A, { x:mx, y:A.y }, { x:mx, y:B.y }, B];
-}
-
-function posOnPath(pts, t) {
-  const segs = [];
-  let total  = 0;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const d = Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y);
-    segs.push(d); total += d;
-  }
-  let dist = t * total;
-  for (let i = 0; i < segs.length; i++) {
-    if (dist <= segs[i]) {
-      const r = dist / segs[i];
-      return { x: pts[i].x + (pts[i+1].x - pts[i].x)*r,
-               y: pts[i].y + (pts[i+1].y - pts[i].y)*r };
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = Math.floor(window.innerWidth * 0.52);
     }
-    dist -= segs[i];
-  }
-  return pts[pts.length-1];
-}
+    resize();
+    window.addEventListener('resize', () => { resize(); });
 
-// ══════════════════════════════════════════════════════════════
-//  DRAW HELPERS
-// ══════════════════════════════════════════════════════════════
-function rr(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
-  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
-  ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
-  ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
-  ctx.closePath();
-}
+    // ══════════════════════════════════════════════════════════════
+    //  COMPONENT DEFINITIONS  (positions as % of canvas)
+    //  Matching the schematic: PV → Combiner → Inverter → Panel → Load / Grid
+    //                                              ↕
+    //                                             BESS
+    // ══════════════════════════════════════════════════════════════
+    function C(xp, yp) { return { x: xp * CW(), y: yp * CH() }; }
 
-function drawPCBGrid() {
-  const step = 36;
-  ctx.save();
-  ctx.strokeStyle = 'rgba(0,255,136,0.035)';
-  ctx.lineWidth   = 0.5;
-  for (let x=0; x<CW(); x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH()); ctx.stroke(); }
-  for (let y=0; y<CH(); y+=step) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW(),y); ctx.stroke(); }
-  ctx.fillStyle = 'rgba(0,255,136,0.05)';
-  for (let x=0; x<CW(); x+=step)
-    for (let y=0; y<CH(); y+=step) {
-      ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill();
+    const DEFS = {
+      pv: { xp: 0.08, yp: 0.42, label: 'PV ARRAY', sub: 'Solar Panels', icon: 'M', color: '#facc15', w: 0.06, h: 0.55 },
+      combiner: { xp: 0.22, yp: 0.38, label: 'COMBINER BOX', sub: 'DC Aggregator', icon: '⚡', color: '#22d3ee', w: 0.07, h: 0.18 },
+      inverter: { xp: 0.44, yp: 0.30, label: 'BI-DIR INVERTER', sub: 'AC/DC Conversion', icon: '~', color: '#00ff88', w: 0.09, h: 0.22 },
+      bess: { xp: 0.44, yp: 0.72, label: 'BESS', sub: 'Battery Storage', icon: '▣', color: '#38bdf8', w: 0.09, h: 0.28 },
+      panel: { xp: 0.67, yp: 0.30, label: 'LOAD PANEL', sub: 'AC Distribution', icon: '▦', color: '#34d399', w: 0.08, h: 0.22 },
+      load: { xp: 0.67, yp: 0.72, label: 'SMART LOAD', sub: 'HVAC · EV · TV · Light', icon: '⌂', color: '#fb7185', w: 0.08, h: 0.28 },
+      grid: { xp: 0.88, yp: 0.22, label: 'UTILITY GRID', sub: 'AC Main', icon: '⌁', color: '#a78bfa', w: 0.07, h: 0.18 },
+      meter: { xp: 0.88, yp: 0.52, label: 'SMART METER', sub: 'Net Measurement', icon: '◉', color: '#fbbf24', w: 0.07, h: 0.18 },
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    //  WIRE DEFINITIONS
+    //  type: 'dc'=blue  'ac'=green  'fb'=purple
+    // ══════════════════════════════════════════════════════════════
+    const WIRES = [
+      { id: 'pv_cb', from: 'pv', to: 'combiner', type: 'dc', label: 'DC Gen', active: true },
+      { id: 'cb_inv', from: 'combiner', to: 'inverter', type: 'dc', label: 'DC Bus', active: true },
+      { id: 'inv_pan', from: 'inverter', to: 'panel', type: 'ac', label: 'AC Electricity', active: true },
+      { id: 'inv_bess', from: 'inverter', to: 'bess', type: 'dc', label: 'DC Charge', active: false },
+      { id: 'bess_inv', from: 'bess', to: 'inverter', type: 'dc', label: 'Discharge', active: false },
+      { id: 'pan_load', from: 'panel', to: 'load', type: 'ac', label: 'Smart Load', active: true },
+      { id: 'pan_met', from: 'panel', to: 'meter', type: 'fb', label: 'Grid Feedback', active: true },
+      { id: 'met_grid', from: 'meter', to: 'grid', type: 'fb', label: 'Grid Sync', active: true },
+      { id: 'grid_met', from: 'grid', to: 'meter', type: 'fb', label: 'Import/Export', active: false },
+    ];
+
+    const WIRE_COLORS = { dc: '#38bdf8', ac: '#00ff88', fb: '#a78bfa' };
+
+    // ══════════════════════════════════════════════════════════════
+    //  ELECTRONS
+    // ══════════════════════════════════════════════════════════════
+    const electrons = [];
+    let spawnTick = 0;
+    let animT = 0;
+
+    function spawnElectrons() {
+      WIRES.forEach(w => {
+        if (!w.active) return;
+        if (Math.random() > 0.55) return;
+        electrons.push({ wire: w, t: 0, speed: 0.012 + Math.random() * 0.008 });
+      });
     }
-  ctx.restore();
-}
 
-function drawWire(w) {
-  const pts = wirePoints(w.from, w.to);
-  const col = WIRE_COLORS[w.type];
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, pts[0].y);
-  for (let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-  ctx.strokeStyle = w.active ? col : 'rgba(255,255,255,0.06)';
-  ctx.lineWidth   = w.active ? 2.5 : 1.5;
-  if (w.type === 'fb') {
-    ctx.setLineDash([6, 4]);
-    ctx.lineWidth = 1.5;
-  }
-  if (w.active) { ctx.shadowColor = col; ctx.shadowBlur = 10; }
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Label on midpoint
-  if (w.active) {
-    const mid = pts[1];
-    ctx.shadowBlur = 0;
-    ctx.fillStyle  = col;
-    ctx.font       = `${Math.max(8, CW()*0.007)}px Share Tech Mono`;
-    ctx.globalAlpha= 0.7;
-    ctx.fillText(w.label, mid.x + 4, mid.y - 5);
-    ctx.globalAlpha= 1;
-  }
-  ctx.restore();
-}
-
-function drawElectron(e) {
-  const pts = wirePoints(e.wire.from, e.wire.to);
-  const pos = posOnPath(pts, e.t);
-  const col = WIRE_COLORS[e.wire.type];
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(pos.x, pos.y, 3.5, 0, Math.PI*2);
-  ctx.fillStyle  = '#fff';
-  ctx.shadowColor= col;
-  ctx.shadowBlur = 20;
-  ctx.fill();
-  // Inner colored dot
-  ctx.beginPath();
-  ctx.arc(pos.x, pos.y, 2, 0, Math.PI*2);
-  ctx.fillStyle = col;
-  ctx.fill();
-  ctx.restore();
-}
-
-// Solar panel cell pattern
-function drawSolarPanel(cx, cy, w, h, glow) {
-  const cols = 3, rows = 6;
-  const cw = w/cols, ch = h/rows;
-  ctx.save();
-  ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-  ctx.lineWidth   = 1;
-  for (let r=0; r<rows; r++) for (let c=0; c<cols; c++) {
-    const x = cx-w/2 + c*cw, y = cy - h/2 + r*ch;
-    const alpha = glow ? 0.55 + 0.3*Math.sin(animT*3 + r + c) : 0.2;
-    ctx.fillStyle = `rgba(${glow?'250,204,21':'30,50,80'}, ${alpha})`;
-    rr(x+1, y+1, cw-2, ch-2, 2); ctx.fill(); ctx.stroke();
-  }
-  // Frame
-  ctx.strokeStyle = glow ? '#facc15' : '#334';
-  ctx.lineWidth   = 2;
-  if (glow) { ctx.shadowColor='#facc15'; ctx.shadowBlur=20; }
-  rr(cx-w/2, cy-h/2, w, h, 4); ctx.stroke();
-  ctx.restore();
-}
-
-// BESS rack with SOC bars
-function drawBESS(cx, cy, w, h, soc) {
-  ctx.save();
-  rr(cx-w/2, cy-h/2, w, h, 8);
-  ctx.fillStyle = '#0a1a1f'; ctx.fill();
-  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
-  ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 15;
-  ctx.stroke();
-
-  // Rack bars representing SOC
-  const bars = 5;
-  const bh   = (h * 0.55) / bars;
-  const bw   = w * 0.7;
-  for (let i=0; i<bars; i++) {
-    const fraction = Math.min(1, Math.max(0, (soc/100 - i/bars) * bars));
-    const by = cy + h*0.1 - (bars - i - 1) * bh - bh;
-    ctx.fillStyle = `rgba(0,100,200,0.2)`;
-    rr(cx-bw/2, by, bw, bh-3, 3); ctx.fill();
-    if (fraction > 0) {
-      ctx.fillStyle = `rgba(56,189,248,${0.3 + fraction*0.7})`;
-      ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = fraction > 0.5 ? 12 : 4;
-      rr(cx-bw/2, by, bw*fraction, bh-3, 3); ctx.fill();
+    // ══════════════════════════════════════════════════════════════
+    //  ROUTING — orthogonal path (right-angle traces like a real PCB)
+    // ══════════════════════════════════════════════════════════════
+    function wirePoints(from, to) {
+      const fd = DEFS[from], td = DEFS[to];
+      const A = { x: fd.xp * CW(), y: fd.yp * CH() };
+      const B = { x: td.xp * CW(), y: td.yp * CH() };
+      const mx = (A.x + B.x) / 2;
+      return [A, { x: mx, y: A.y }, { x: mx, y: B.y }, B];
     }
-  }
 
-  // SOC text
-  ctx.shadowBlur = 0;
-  ctx.fillStyle  = '#38bdf8';
-  ctx.font       = `bold ${Math.max(10, w*0.22)}px Orbitron`;
-  ctx.textAlign  = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(Math.round(soc)+'%', cx, cy + h*0.3);
-  ctx.font       = `${Math.max(7, w*0.1)}px Share Tech Mono`;
-  ctx.fillStyle  = 'rgba(56,189,248,0.6)';
-  ctx.fillText('SOC', cx, cy + h*0.45);
-  ctx.restore();
-}
+    function posOnPath(pts, t) {
+      const segs = [];
+      let total = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const d = Math.hypot(pts[i + 1].x - pts[i].x, pts[i + 1].y - pts[i].y);
+        segs.push(d); total += d;
+      }
+      let dist = t * total;
+      for (let i = 0; i < segs.length; i++) {
+        if (dist <= segs[i]) {
+          const r = dist / segs[i];
+          return {
+            x: pts[i].x + (pts[i + 1].x - pts[i].x) * r,
+            y: pts[i].y + (pts[i + 1].y - pts[i].y) * r
+          };
+        }
+        dist -= segs[i];
+      }
+      return pts[pts.length - 1];
+    }
 
-function drawChip(cx, cy, w, h, label, sub, iconText, color, pulse) {
-  ctx.save();
-  const p = pulse ? 1 + 0.03 * Math.sin(animT * 2) : 1;
+    // ══════════════════════════════════════════════════════════════
+    //  DRAW HELPERS
+    // ══════════════════════════════════════════════════════════════
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+      ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+      ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
+    }
 
-  // Glow aura
-  ctx.globalAlpha = 0.15 * p;
-  rr(cx-w/2 - 6, cy-h/2 - 6, w+12, h+12, 12);
-  ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 25;
-  ctx.fill();
-  ctx.globalAlpha = 1;
+    function drawPCBGrid() {
+      const step = 36;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0,255,136,0.035)';
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x < CW(); x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH()); ctx.stroke(); }
+      for (let y = 0; y < CH(); y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW(), y); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(0,255,136,0.05)';
+      for (let x = 0; x < CW(); x += step)
+        for (let y = 0; y < CH(); y += step) {
+          ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2); ctx.fill();
+        }
+      ctx.restore();
+    }
 
-  // Body
-  rr(cx-w/2, cy-h/2, w, h, 10);
-  ctx.fillStyle = '#091510'; ctx.fill();
-  ctx.strokeStyle = color; ctx.lineWidth = 2;
-  ctx.shadowColor = color; ctx.shadowBlur = pulse ? 18 : 8;
-  ctx.stroke();
+    function drawWire(w) {
+      const pts = wirePoints(w.from, w.to);
+      const col = WIRE_COLORS[w.type];
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.strokeStyle = w.active ? col : 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = w.active ? 2.5 : 1.5;
+      if (w.type === 'fb') {
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 1.5;
+      }
+      if (w.active) { ctx.shadowColor = col; ctx.shadowBlur = 10; }
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-  // IC Pins (left & right)
-  ctx.fillStyle = color;
-  ctx.shadowBlur = 4;
-  const pins = 4, pinH = 6, pinW = 10;
-  for (let i=0; i<pins; i++) {
-    const py = cy - h*0.3 + i*(h*0.6/(pins-1));
-    ctx.fillRect(cx-w/2-pinW, py-pinH/2, pinW, pinH);
-    ctx.fillRect(cx+w/2,       py-pinH/2, pinW, pinH);
-  }
+      // Label on midpoint
+      if (w.active) {
+        const mid = pts[1];
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = col;
+        ctx.font = `${Math.max(8, CW() * 0.007)}px Share Tech Mono`;
+        ctx.globalAlpha = 0.7;
+        ctx.fillText(w.label, mid.x + 4, mid.y - 5);
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+    }
 
-  // Icon
-  ctx.shadowBlur = 0;
-  ctx.fillStyle  = color;
-  ctx.font       = `bold ${Math.max(10, w*0.25)}px Share Tech Mono`;
-  ctx.textAlign  = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(iconText, cx, cy - h*0.1);
+    function drawElectron(e) {
+      const pts = wirePoints(e.wire.from, e.wire.to);
+      const pos = posOnPath(pts, e.t);
+      const col = WIRE_COLORS[e.wire.type];
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 20;
+      ctx.fill();
+      // Inner colored dot
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = col;
+      ctx.fill();
+      ctx.restore();
+    }
 
-  // Label
-  ctx.fillStyle  = '#ffffff';
-  ctx.font       = `600 ${Math.max(7, w*0.12)}px Inter`;
-  ctx.fillText(label, cx, cy + h*0.22);
-  ctx.fillStyle  = 'rgba(255,255,255,0.35)';
-  ctx.font       = `${Math.max(6, w*0.1)}px Inter`;
-  ctx.fillText(sub, cx, cy + h*0.38);
-  ctx.restore();
-}
+    // Solar panel cell pattern
+    function drawSolarPanel(cx, cy, w, h, glow) {
+      const cols = 3, rows = 6;
+      const cw = w / cols, ch = h / rows;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 1;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const x = cx - w / 2 + c * cw, y = cy - h / 2 + r * ch;
+        const alpha = glow ? 0.55 + 0.3 * Math.sin(animT * 3 + r + c) : 0.2;
+        ctx.fillStyle = `rgba(${glow ? '250,204,21' : '30,50,80'}, ${alpha})`;
+        rr(x + 1, y + 1, cw - 2, ch - 2, 2); ctx.fill(); ctx.stroke();
+      }
+      // Frame
+      ctx.strokeStyle = glow ? '#facc15' : '#334';
+      ctx.lineWidth = 2;
+      if (glow) { ctx.shadowColor = '#facc15'; ctx.shadowBlur = 20; }
+      rr(cx - w / 2, cy - h / 2, w, h, 4); ctx.stroke();
+      ctx.restore();
+    }
 
-// Power tower / grid pole icon
-function drawGridTower(cx, cy, w, h, color) {
-  ctx.save();
-  ctx.strokeStyle = color; ctx.lineWidth = 2;
-  ctx.shadowColor = color; ctx.shadowBlur = 10;
-  // Main pole
-  ctx.beginPath();
-  ctx.moveTo(cx, cy+h*0.5);
-  ctx.lineTo(cx, cy-h*0.5);
-  ctx.stroke();
-  // Cross bars
-  [-0.3, 0.0, 0.25].forEach(f => {
-    ctx.beginPath();
-    ctx.moveTo(cx-w*0.4, cy+h*f);
-    ctx.lineTo(cx+w*0.4, cy+h*f);
-    ctx.stroke();
-    // Diagonal braces
-    ctx.beginPath();
-    ctx.moveTo(cx-w*0.4, cy+h*f);
-    ctx.lineTo(cx-w*0.2, cy+h*(f-0.2));
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(cx+w*0.4, cy+h*f);
-    ctx.lineTo(cx+w*0.2, cy+h*(f-0.2));
-    ctx.stroke();
-  });
-  // Lines extending from top (wires)
-  [-.35, 0, .35].forEach(offset => {
-    ctx.beginPath();
-    ctx.moveTo(cx + offset*w*0.5, cy - h*0.5);
-    ctx.lineTo(cx + offset*w*0.5, cy - h*0.65);
-    ctx.stroke();
-  });
-  ctx.restore();
-}
+    // BESS rack with SOC bars
+    function drawBESS(cx, cy, w, h, soc) {
+      ctx.save();
+      rr(cx - w / 2, cy - h / 2, w, h, 8);
+      ctx.fillStyle = '#0a1a1f'; ctx.fill();
+      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+      ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 15;
+      ctx.stroke();
 
-function drawMeter(cx, cy, w, h, color, price) {
-  ctx.save();
-  rr(cx-w/2, cy-h/2, w, h, 8);
-  ctx.fillStyle = '#0b120f'; ctx.fill();
-  ctx.strokeStyle = color; ctx.lineWidth = 2;
-  ctx.shadowColor = color; ctx.shadowBlur = 12; ctx.stroke();
+      // Rack bars representing SOC
+      const bars = 5;
+      const bh = (h * 0.55) / bars;
+      const bw = w * 0.7;
+      for (let i = 0; i < bars; i++) {
+        const fraction = Math.min(1, Math.max(0, (soc / 100 - i / bars) * bars));
+        const by = cy + h * 0.1 - (bars - i - 1) * bh - bh;
+        ctx.fillStyle = `rgba(0,100,200,0.2)`;
+        rr(cx - bw / 2, by, bw, bh - 3, 3); ctx.fill();
+        if (fraction > 0) {
+          ctx.fillStyle = `rgba(56,189,248,${0.3 + fraction * 0.7})`;
+          ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = fraction > 0.5 ? 12 : 4;
+          rr(cx - bw / 2, by, bw * fraction, bh - 3, 3); ctx.fill();
+        }
+      }
 
-  // Digital readout
-  ctx.fillStyle = '#00ff00'; // Classic green LCD
-  ctx.font = `bold ${Math.max(9, w*0.22)}px Orbitron`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('$'+price, cx, cy - h*0.05);
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = `${Math.max(6, w*0.12)}px Share Tech Mono`;
-  ctx.fillText('SMART METER', cx, cy + h*0.28);
-  ctx.fillText('Net Measure', cx, cy + h*0.42);
-  ctx.restore();
-}
+      // SOC text
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = `bold ${Math.max(10, w * 0.22)}px Orbitron`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(Math.round(soc) + '%', cx, cy + h * 0.3);
+      ctx.font = `${Math.max(7, w * 0.1)}px Share Tech Mono`;
+      ctx.fillStyle = 'rgba(56,189,248,0.6)';
+      ctx.fillText('SOC', cx, cy + h * 0.45);
+      ctx.restore();
+    }
 
-// ══════════════════════════════════════════════════════════════
-//  LIVE STATE
-// ══════════════════════════════════════════════════════════════
-let state = { solar:5.2, demand:3.1, soc:50, voltage:1.0, score:0, action:'Charging', price:0.15 };
+    function drawChip(cx, cy, w, h, label, sub, iconText, color, pulse) {
+      ctx.save();
+      const p = pulse ? 1 + 0.03 * Math.sin(animT * 2) : 1;
 
-// ══════════════════════════════════════════════════════════════
-//  RL DECISION BOX
-// ══════════════════════════════════════════════════════════════
-function drawRLBox() {
-  const x = CW()*0.44, y = CH()*0.04;
-  const w = CW()*0.18, h = CH()*0.18;
-  ctx.save();
-  rr(x, y, w, h, 10);
-  ctx.fillStyle   = 'rgba(0,255,136,0.05)'; ctx.fill();
-  ctx.strokeStyle = 'rgba(0,255,136,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+      // Glow aura
+      ctx.globalAlpha = 0.15 * p;
+      rr(cx - w / 2 - 6, cy - h / 2 - 6, w + 12, h + 12, 12);
+      ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 25;
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
-  ctx.fillStyle = '#00ff88'; ctx.font = `bold ${Math.max(8, CW()*0.008)}px Orbitron`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('RL AGENT DECISION', x+w/2, y+h*0.18);
+      // Body
+      rr(cx - w / 2, cy - h / 2, w, h, 10);
+      ctx.fillStyle = '#091510'; ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.shadowColor = color; ctx.shadowBlur = pulse ? 18 : 8;
+      ctx.stroke();
 
-  const col = state.action === 'Charging' ? '#38bdf8' : '#fb7185';
-  ctx.fillStyle = col; ctx.font = `bold ${Math.max(10, CW()*0.012)}px Orbitron`;
-  ctx.fillText('▶ ' + state.action.toUpperCase(), x+w/2, y+h*0.45);
+      // IC Pins (left & right)
+      ctx.fillStyle = color;
+      ctx.shadowBlur = 4;
+      const pins = 4, pinH = 6, pinW = 10;
+      for (let i = 0; i < pins; i++) {
+        const py = cy - h * 0.3 + i * (h * 0.6 / (pins - 1));
+        ctx.fillRect(cx - w / 2 - pinW, py - pinH / 2, pinW, pinH);
+        ctx.fillRect(cx + w / 2, py - pinH / 2, pinW, pinH);
+      }
 
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = `${Math.max(7, CW()*0.007)}px Share Tech Mono`;
-  ctx.fillText(`SCORE: ${state.score}%`, x+w/2, y+h*0.68);
-  ctx.fillText(`V: ${state.voltage} p.u.`, x+w/2, y+h*0.85);
-  ctx.restore();
-}
+      // Icon
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = color;
+      ctx.font = `bold ${Math.max(10, w * 0.25)}px Share Tech Mono`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(iconText, cx, cy - h * 0.1);
 
-// ══════════════════════════════════════════════════════════════
-//  MAIN RENDER LOOP
-// ══════════════════════════════════════════════════════════════
-function draw() {
-  requestAnimationFrame(draw);
-  animT += 0.016;
-  spawnTick++;
+      // Label
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `600 ${Math.max(7, w * 0.12)}px Inter`;
+      ctx.fillText(label, cx, cy + h * 0.22);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = `${Math.max(6, w * 0.1)}px Inter`;
+      ctx.fillText(sub, cx, cy + h * 0.38);
+      ctx.restore();
+    }
 
-  ctx.clearRect(0, 0, CW(), CH());
-  ctx.fillStyle = '#030d0a'; ctx.fillRect(0,0,CW(),CH());
-  drawPCBGrid();
+    // Power tower / grid pole icon
+    function drawGridTower(cx, cy, w, h, color) {
+      ctx.save();
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.shadowColor = color; ctx.shadowBlur = 10;
+      // Main pole
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + h * 0.5);
+      ctx.lineTo(cx, cy - h * 0.5);
+      ctx.stroke();
+      // Cross bars
+      [-0.3, 0.0, 0.25].forEach(f => {
+        ctx.beginPath();
+        ctx.moveTo(cx - w * 0.4, cy + h * f);
+        ctx.lineTo(cx + w * 0.4, cy + h * f);
+        ctx.stroke();
+        // Diagonal braces
+        ctx.beginPath();
+        ctx.moveTo(cx - w * 0.4, cy + h * f);
+        ctx.lineTo(cx - w * 0.2, cy + h * (f - 0.2));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + w * 0.4, cy + h * f);
+        ctx.lineTo(cx + w * 0.2, cy + h * (f - 0.2));
+        ctx.stroke();
+      });
+      // Lines extending from top (wires)
+      [-.35, 0, .35].forEach(offset => {
+        ctx.beginPath();
+        ctx.moveTo(cx + offset * w * 0.5, cy - h * 0.5);
+        ctx.lineTo(cx + offset * w * 0.5, cy - h * 0.65);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
 
-  // Wires
-  WIRES.forEach(w => drawWire(w));
+    function drawMeter(cx, cy, w, h, color, price) {
+      ctx.save();
+      rr(cx - w / 2, cy - h / 2, w, h, 8);
+      ctx.fillStyle = '#0b120f'; ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.shadowColor = color; ctx.shadowBlur = 12; ctx.stroke();
 
-  // Spawn electrons every ~20 frames
-  if (spawnTick % 20 === 0) spawnElectrons();
+      // Digital readout
+      ctx.fillStyle = '#00ff00'; // Classic green LCD
+      ctx.font = `bold ${Math.max(9, w * 0.22)}px Orbitron`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('$' + price, cx, cy - h * 0.05);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.font = `${Math.max(6, w * 0.12)}px Share Tech Mono`;
+      ctx.fillText('SMART METER', cx, cy + h * 0.28);
+      ctx.fillText('Net Measure', cx, cy + h * 0.42);
+      ctx.restore();
+    }
 
-  // Update & draw electrons
-  for (let i=electrons.length-1; i>=0; i--) {
-    const e = electrons[i];
-    e.t += e.speed;
-    if (e.t >= 1 || !e.wire.active) { electrons.splice(i,1); continue; }
-    drawElectron(e);
-  }
+    // ══════════════════════════════════════════════════════════════
+    //  LIVE STATE
+    // ══════════════════════════════════════════════════════════════
+    let state = { solar: 5.2, demand: 3.1, soc: 50, voltage: 1.0, score: 0, action: 'Charging', price: 0.15 };
 
-  // Component sizes in px
-  const sw = CW()*0.065, sh = CH()*0.55; // solar panel
-  const cw = CW()*0.07,  ch = CH()*0.18;
-  const iw = CW()*0.09,  ih = CH()*0.22;
-  const bw = CW()*0.09,  bh = CH()*0.30;
-  const pw = CW()*0.08,  ph = CH()*0.18;
-  const lw = CW()*0.09,  lh = CH()*0.26;
-  const gw = CW()*0.07,  gh = CH()*0.25;
-  const mw = CW()*0.08,  mh = CH()*0.18;
+    // ══════════════════════════════════════════════════════════════
+    //  RL DECISION BOX
+    // ══════════════════════════════════════════════════════════════
+    function drawRLBox() {
+      const x = CW() * 0.44, y = CH() * 0.04;
+      const w = CW() * 0.18, h = CH() * 0.18;
+      ctx.save();
+      rr(x, y, w, h, 10);
+      ctx.fillStyle = 'rgba(0,255,136,0.05)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(0,255,136,0.3)'; ctx.lineWidth = 1; ctx.stroke();
 
-  // PV Array — drawn as actual solar panel cells
-  drawSolarPanel(DEFS.pv.xp*CW(), DEFS.pv.yp*CH(), sw, sh, state.solar > 1.0);
+      ctx.fillStyle = '#00ff88'; ctx.font = `bold ${Math.max(8, CW() * 0.008)}px Orbitron`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('RL AGENT DECISION', x + w / 2, y + h * 0.18);
 
-  // Combiner Box
-  drawChip(DEFS.combiner.xp*CW(), DEFS.combiner.yp*CH(), cw, ch,
-           'COMBINER', 'DC Aggregator', '⚡', DEFS.combiner.color, false);
+      const col = state.action === 'Charging' ? '#38bdf8' : '#fb7185';
+      ctx.fillStyle = col; ctx.font = `bold ${Math.max(10, CW() * 0.012)}px Orbitron`;
+      ctx.fillText('▶ ' + state.action.toUpperCase(), x + w / 2, y + h * 0.45);
 
-  // BI-DIR Inverter (the brain — always pulsing)
-  drawChip(DEFS.inverter.xp*CW(), DEFS.inverter.yp*CH(), iw, ih,
-           'BI-DIR INV', 'AC/DC', '~', DEFS.inverter.color, true);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = `${Math.max(7, CW() * 0.007)}px Share Tech Mono`;
+      ctx.fillText(`SCORE: ${state.score}%`, x + w / 2, y + h * 0.68);
+      ctx.fillText(`V: ${state.voltage} p.u.`, x + w / 2, y + h * 0.85);
+      ctx.restore();
+    }
 
-  // BESS with live SOC bars
-  drawBESS(DEFS.bess.xp*CW(), DEFS.bess.yp*CH(), bw, bh, state.soc);
+    // ══════════════════════════════════════════════════════════════
+    //  MAIN RENDER LOOP
+    // ══════════════════════════════════════════════════════════════
+    function draw() {
+      requestAnimationFrame(draw);
+      animT += 0.016;
+      spawnTick++;
 
-  // Smart Load Panel
-  drawChip(DEFS.panel.xp*CW(), DEFS.panel.yp*CH(), pw, ph,
-           'LOAD PANEL', 'AC Dist.', '▦', DEFS.panel.color, false);
+      ctx.clearRect(0, 0, CW(), CH());
+      ctx.fillStyle = '#030d0a'; ctx.fillRect(0, 0, CW(), CH());
+      drawPCBGrid();
 
-  // Smart Load (home)
-  drawChip(DEFS.load.xp*CW(), DEFS.load.yp*CH(), lw, lh,
-           'SMART LOAD', 'HVAC·EV·TV', '⌂', DEFS.load.color, false);
+      // Wires
+      WIRES.forEach(w => drawWire(w));
 
-  // Utility Grid — drawn as power tower
-  drawGridTower(DEFS.grid.xp*CW(), DEFS.grid.yp*CH(), gw, gh, DEFS.grid.color);
-  ctx.save();
-  ctx.fillStyle = DEFS.grid.color; ctx.font = `${Math.max(6,CW()*0.007)}px Inter`;
-  ctx.textAlign = 'center'; ctx.fillText('UTILITY GRID', DEFS.grid.xp*CW(), DEFS.grid.yp*CH()+gh*0.55);
-  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = `${Math.max(5,CW()*0.006)}px Inter`;
-  ctx.fillText('AC Main', DEFS.grid.xp*CW(), DEFS.grid.yp*CH()+gh*0.7);
-  ctx.restore();
+      // Spawn electrons every ~20 frames
+      if (spawnTick % 20 === 0) spawnElectrons();
 
-  // Smart Meter
-  drawMeter(DEFS.meter.xp*CW(), DEFS.meter.yp*CH(), mw, mh,
-            DEFS.meter.color, state.price);
+      // Update & draw electrons
+      for (let i = electrons.length - 1; i >= 0; i--) {
+        const e = electrons[i];
+        e.t += e.speed;
+        if (e.t >= 1 || !e.wire.active) { electrons.splice(i, 1); continue; }
+        drawElectron(e);
+      }
 
-  // RL Decision box
-  drawRLBox();
-}
+      // Component sizes in px
+      const sw = CW() * 0.065, sh = CH() * 0.55; // solar panel
+      const cw = CW() * 0.07, ch = CH() * 0.18;
+      const iw = CW() * 0.09, ih = CH() * 0.22;
+      const bw = CW() * 0.09, bh = CH() * 0.30;
+      const pw = CW() * 0.08, ph = CH() * 0.18;
+      const lw = CW() * 0.09, lh = CH() * 0.26;
+      const gw = CW() * 0.07, gh = CH() * 0.25;
+      const mw = CW() * 0.08, mh = CH() * 0.18;
 
-draw();
+      // PV Array — drawn as actual solar panel cells
+      drawSolarPanel(DEFS.pv.xp * CW(), DEFS.pv.yp * CH(), sw, sh, state.solar > 1.0);
 
-// ══════════════════════════════════════════════════════════════
-//  WEBSOCKET — drive wire activation from live RL state
-// ══════════════════════════════════════════════════════════════
-function setWire(id, active) {
-  const w = WIRES.find(x => x.id === id);
-  if (w) w.active = active;
-}
+      // Combiner Box
+      drawChip(DEFS.combiner.xp * CW(), DEFS.combiner.yp * CH(), cw, ch,
+        'COMBINER', 'DC Aggregator', '⚡', DEFS.combiner.color, false);
 
-const ws = new WebSocket(`ws://${location.host}/ws`);
-ws.onopen  = () => document.getElementById('status').innerText = 'RL MODEL ACTIVE';
-ws.onclose = () => document.getElementById('status').innerText = 'DISCONNECTED';
+      // BI-DIR Inverter (the brain — always pulsing)
+      drawChip(DEFS.inverter.xp * CW(), DEFS.inverter.yp * CH(), iw, ih,
+        'BI-DIR INV', 'AC/DC', '~', DEFS.inverter.color, true);
 
-ws.onmessage = (evt) => {
-  const d = JSON.parse(evt.data);
-  state.solar   = d.solar;
-  state.demand  = d.demand;
-  state.soc     = d.battery_soc;
-  state.voltage = d.voltage;
-  state.score   = d.score;
-  state.action  = d.action;
-  state.price   = d.price;
+      // BESS with live SOC bars
+      drawBESS(DEFS.bess.xp * CW(), DEFS.bess.yp * CH(), bw, bh, state.soc);
 
-  // Metrics bar
-  document.getElementById('m_solar').innerText  = d.solar  + ' kW';
-  document.getElementById('m_soc').innerText    = d.battery_soc + '%';
-  document.getElementById('m_demand').innerText = d.demand + ' kW';
-  document.getElementById('m_volt').innerText   = d.voltage;
-  document.getElementById('m_price').innerText  = '$' + d.price;
-  document.getElementById('m_score').innerText  = d.score + '%';
+      // Smart Load Panel
+      drawChip(DEFS.panel.xp * CW(), DEFS.panel.yp * CH(), pw, ph,
+        'LOAD PANEL', 'AC Dist.', '▦', DEFS.panel.color, false);
 
-  const hasSolar   = d.solar > 0.5;
-  const charging   = d.action === 'Charging';
-  const battFull   = d.battery_soc > 90;
-  const battLow    = d.battery_soc < 15;
-  const peakHours  = d.price > 0.20;
+      // Smart Load (home)
+      drawChip(DEFS.load.xp * CW(), DEFS.load.yp * CH(), lw, lh,
+        'SMART LOAD', 'HVAC·EV·TV', '⌂', DEFS.load.color, false);
 
-  // Wire activation based on RL decision
-  setWire('pv_cb',   hasSolar);
-  setWire('cb_inv',  hasSolar);
-  setWire('inv_pan', true);                           // Always distributing
-  setWire('inv_bess', charging && !battFull);         // Charge BESS
-  setWire('bess_inv', !charging || battLow);          // Discharge BESS
-  setWire('pan_load', true);                          // Always supplying load
-  setWire('pan_met',  peakHours || battLow);          // Grid feedback during stress
-  setWire('met_grid', true);                          // Metering always active
-  setWire('grid_met', battLow && !hasSolar);          // Import from grid only when needed
-};
-</script>
+      // Utility Grid — drawn as power tower
+      drawGridTower(DEFS.grid.xp * CW(), DEFS.grid.yp * CH(), gw, gh, DEFS.grid.color);
+      ctx.save();
+      ctx.fillStyle = DEFS.grid.color; ctx.font = `${Math.max(6, CW() * 0.007)}px Inter`;
+      ctx.textAlign = 'center'; ctx.fillText('UTILITY GRID', DEFS.grid.xp * CW(), DEFS.grid.yp * CH() + gh * 0.55);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = `${Math.max(5, CW() * 0.006)}px Inter`;
+      ctx.fillText('AC Main', DEFS.grid.xp * CW(), DEFS.grid.yp * CH() + gh * 0.7);
+      ctx.restore();
+
+      // Smart Meter
+      drawMeter(DEFS.meter.xp * CW(), DEFS.meter.yp * CH(), mw, mh,
+        DEFS.meter.color, state.price);
+
+      // RL Decision box
+      drawRLBox();
+    }
+
+    draw();
+
+    // ══════════════════════════════════════════════════════════════
+    //  WEBSOCKET — drive wire activation from live RL state
+    // ══════════════════════════════════════════════════════════════
+    function setWire(id, active) {
+      const w = WIRES.find(x => x.id === id);
+      if (w) w.active = active;
+    }
+
+    const wsUrl = new URL('/ws', window.location.href);
+    wsUrl.protocol = wsUrl.protocol.replace('http', 'ws');
+    const ws = new WebSocket(wsUrl.href);
+    ws.onopen = () => document.getElementById('status').innerText = 'RL MODEL ACTIVE';
+    ws.onclose = () => document.getElementById('status').innerText = 'DISCONNECTED';
+
+    ws.onmessage = (evt) => {
+      const d = JSON.parse(evt.data);
+      state.solar = d.solar;
+      state.demand = d.demand;
+      state.soc = d.battery_soc;
+      state.voltage = d.voltage;
+      state.score = d.score;
+      state.action = d.action;
+      state.price = d.price;
+
+      // Metrics bar
+      document.getElementById('m_solar').innerText = d.solar + ' kW';
+      document.getElementById('m_soc').innerText = d.battery_soc + '%';
+      document.getElementById('m_demand').innerText = d.demand + ' kW';
+      document.getElementById('m_volt').innerText = d.voltage;
+      document.getElementById('m_price').innerText = '$' + d.price;
+      document.getElementById('m_score').innerText = d.score + '%';
+
+      const hasSolar = d.solar > 0.5;
+      const charging = d.action === 'Charging';
+      const battFull = d.battery_soc > 90;
+      const battLow = d.battery_soc < 15;
+      const peakHours = d.price > 0.20;
+
+      // Wire activation based on RL decision
+      setWire('pv_cb', hasSolar);
+      setWire('cb_inv', hasSolar);
+      setWire('inv_pan', true);                           // Always distributing
+      setWire('inv_bess', charging && !battFull);         // Charge BESS
+      setWire('bess_inv', !charging || battLow);          // Discharge BESS
+      setWire('pan_load', true);                          // Always supplying load
+      setWire('pan_met', peakHours || battLow);          // Grid feedback during stress
+      setWire('met_grid', true);                          // Metering always active
+      setWire('grid_met', battLow && !hasSolar);          // Import from grid only when needed
+    };
+  </script>
 </body>
+
 </html>
