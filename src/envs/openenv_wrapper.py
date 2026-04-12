@@ -224,4 +224,8 @@ class SolarGridEnv(gym.Env):
             
         # Update running cumulative score (Shaping Credit)
         self.cumulative_task_score = (self.cumulative_task_score * (self.current_step - 1) + step_score) / self.current_step
-        return float(np.clip(self.cumulative_task_score, 0.0, 1.0))
+        
+        # Ensure score is strictly between 0 and 1 (not 0.0 or 1.0) for the validator
+        epsilon = 1e-4
+        final_score = np.clip(self.cumulative_task_score, epsilon, 1.0 - epsilon)
+        return float(final_score)
