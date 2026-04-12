@@ -11,11 +11,20 @@ st.write("Smart Solar Grid Optimization System")
 
 st.success("App is running 🚀")
 
+# PRE-SUBMISSION CONFIGURATION
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o")
+HF_TOKEN = os.getenv("HF_TOKEN") # No default as per requirements
+
 def get_openai_client():
-    key = os.getenv("OPENAI_API_KEY")
-    if not key:
+    # Grader expects configuring via API_BASE_URL and HF_TOKEN (or generic API key)
+    api_key = HF_TOKEN or os.getenv("OPENAI_API_KEY")
+    if not api_key:
         return None
-    return openai.OpenAI(api_key=key)
+    return openai.OpenAI(
+        api_key=api_key,
+        base_url=API_BASE_URL
+    )
 
 client = get_openai_client()
 
@@ -39,7 +48,7 @@ def get_agent_action(obs: SolarObservation, task_name: str) -> SolarAction:
     
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model=MODEL_NAME,
             messages=[{"role": "system", "content": system_prompt}],
             response_format={"type": "json_object"}
         )
